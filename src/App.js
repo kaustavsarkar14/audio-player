@@ -52,14 +52,20 @@ function App() {
 
   useEffect(() => {
     if (!file) return;
-    audioRef.current.currentTime = playingAudioDuration;
-    if(!isFirstLoad){
-      audioRef.current.currentTime = 0;
-      setPlayingAudioDuration(0);
-      audioRef.current.play();
-      setIsPlaying(true);
+    const audioElement = audioRef.current;
+    if (!audioElement) return;
+  
+    if (isFinite(playingAudioDuration)) {
+      audioElement.currentTime = playingAudioDuration;
+      if (!isFirstLoad) {
+        audioElement.currentTime = 0;
+        setPlayingAudioDuration(0);
+        audioElement.play();
+        setIsPlaying(true);
+      }
     }
   }, [file]);
+  
 
   useEffect(() => {
     const lastPlayingAudioIndex = localStorage.getItem("lastPlayingAudioIndex");
