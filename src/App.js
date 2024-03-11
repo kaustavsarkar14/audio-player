@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import { addToIndexedDB } from "./utils/functions";
 import useIndexDB from "./hooks/useIndexDB";
@@ -6,6 +6,10 @@ import useIndexDB from "./hooks/useIndexDB";
 function App() {
   const [playlist, setPlaylist] = useState([]);
   const [file, setFile] = useState();
+  const [playingAudioIndex, setPlayingAudioIndex] = useState(0);
+  const [playingAudioDuration, setPlayingAudioDuration] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
   useIndexDB({ setPlaylist });
 
   const handleFileInput = (e) => {
@@ -14,6 +18,8 @@ function App() {
       name: selectedFile.name,
       data: URL.createObjectURL(selectedFile),
     });
+    setPlayingAudioIndex(playlist.length);
+    localStorage.setItem("lastPlayingAudioIndex", playlist.length);
     const reader = new FileReader();
     reader.readAsDataURL(selectedFile);
     reader.onloadend = () => {
@@ -30,24 +36,84 @@ function App() {
     ]);
   };
 
+  const handleClickOnAudio = (audio, i) => {
+    setPlayingAudioIndex(i);
+    setPlayingAudioDuration(0);
+    setFile(audio);
+    localStorage.setItem("lastPlayingAudioIndex", i);
+  };
+
+  useEffect(() => {
+    if (playlist.length == 0) return;
+    setFile(playlist[playingAudioIndex]);
+  }, [playlist]);
+
+  useEffect(() => {
+    if (!file) return;
+    audioRef.current.currentTime = playingAudioDuration;
+  }, [file]);
+
+  useEffect(() => {
+    const lastPlayingAudioIndex = localStorage.getItem("lastPlayingAudioIndex");
+    if (lastPlayingAudioIndex)
+      setPlayingAudioIndex(parseInt(lastPlayingAudioIndex));
+
+    const lastPlayingAudioDuration = parseFloat(
+      localStorage.getItem("playingAudioDuration")
+    );
+    setPlayingAudioDuration(lastPlayingAudioDuration);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("playingAudioDuration", playingAudioDuration);
+  }, [playingAudioDuration]);
+
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
   return (
-    <div>
-      <div>
-        {file && (
-          <audio key={file.name} controls>
+    <div className="md:w-[70%] w-full min-h-screen  mx-auto rounded-md p-4 flex flex-col shadow-md">
+      <h1 className="text-xl font-semibold" >Now playing</h1>
+      {file && (
+        <div>
+          <h1>{file.name}</h1>
+          <audio
+            className="w-full my-4"
+            ref={audioRef}
+            key={file.name}
+            onTimeUpdate={(e) => setPlayingAudioDuration(e.target.currentTime)}
+            controls
+          >
             <source src={file.data} type="audio/mpeg" />
-            Your browser does not support the audio element.
           </audio>
-        )}
-      </div>
+        </div>
+      )}
       <input type="file" onChange={handleFileInput} />
-      {playlist.map((audio, i) => {
-        return (
-          <div key={i} onClick={() => setFile(audio)}>
-            {audio.name}
-          </div>
-        );
-      })}
+      <button onClick={handlePlayPause} className="bg-black p-2 px-4 text-white rounded-md my-2 max-w-24">
+        {isPlaying ? "Pause" : "Play"}
+      </button>
+      <div className="flex flex-col gap-2">
+        {playlist.map((audio, i) => {
+          return (
+            <div
+              className={
+                "flex p-2 gap-3 rounded-md border cursor-pointer " +
+                (playingAudioIndex == i && "bg-gray-200")
+              }
+              key={i}
+              onClick={() => handleClickOnAudio(audio, i)}
+            >
+              <p>{audio.name}</p>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

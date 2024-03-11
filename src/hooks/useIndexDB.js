@@ -22,7 +22,6 @@ const useIndexDB = ({setPlaylist})=>{
         };
     
         request.onsuccess = (event) => {
-          console.log("IndexedDB opened successfully");
         };
       };
     
@@ -44,6 +43,7 @@ const useIndexDB = ({setPlaylist})=>{
               }))
             );
           };
+          
           getAllRequest.onerror = (error) => {
             console.error(
               "Error retrieving data from IndexedDB:",
