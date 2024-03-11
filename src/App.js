@@ -9,6 +9,7 @@ function App() {
   const [playingAudioIndex, setPlayingAudioIndex] = useState(0);
   const [playingAudioDuration, setPlayingAudioDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const audioRef = useRef(null);
   useIndexDB({ setPlaylist });
 
@@ -37,6 +38,7 @@ function App() {
   };
 
   const handleClickOnAudio = (audio, i) => {
+    setIsFirstLoad(false);
     setPlayingAudioIndex(i);
     setPlayingAudioDuration(0);
     setFile(audio);
@@ -51,6 +53,12 @@ function App() {
   useEffect(() => {
     if (!file) return;
     audioRef.current.currentTime = playingAudioDuration;
+    if(!isFirstLoad){
+      audioRef.current.currentTime = 0;
+      setPlayingAudioDuration(0);
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
   }, [file]);
 
   useEffect(() => {
@@ -66,6 +74,11 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem("playingAudioDuration", playingAudioDuration);
+    if(!audioRef.current) return;
+    if (playingAudioDuration == audioRef.current.duration){
+      setFile(playingAudioIndex == playlist.length - 1 ? playlist[0] : playlist[playingAudioIndex + 1]);
+      setPlayingAudioIndex(playingAudioIndex == playlist.length - 1 ? 0 : playingAudioIndex + 1);
+    }
   }, [playingAudioDuration]);
 
   const handlePlayPause = () => {
@@ -79,7 +92,7 @@ function App() {
   };
   return (
     <div className="md:w-[70%] w-full min-h-screen  mx-auto rounded-md p-4 flex flex-col shadow-md">
-      <h1 className="text-xl font-semibold" >Now playing</h1>
+      <h1 className="text-xl font-semibold">Now playing</h1>
       {file && (
         <div>
           <h1>{file.name}</h1>
@@ -95,7 +108,10 @@ function App() {
         </div>
       )}
       <input type="file" onChange={handleFileInput} />
-      <button onClick={handlePlayPause} className="bg-black p-2 px-4 text-white rounded-md my-2 max-w-24">
+      <button
+        onClick={handlePlayPause}
+        className="bg-black p-2 px-4 text-white rounded-md my-2 max-w-24"
+      >
         {isPlaying ? "Pause" : "Play"}
       </button>
       <div className="flex flex-col gap-2">
