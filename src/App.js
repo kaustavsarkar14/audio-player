@@ -92,7 +92,9 @@ function App() {
   };
   return (
     <div className="md:w-[70%] w-full min-h-screen  mx-auto rounded-md p-4 flex flex-col shadow-md">
-      <h1 className="text-xl font-semibold">Now playing</h1>
+      <h1 className="text-2xl text-center my-2 font-semibold" >Audio Player</h1>
+      {!file && <p>Select a audio file to play.</p>}
+    {file &&  <h1 className="text-xl font-semibold">Now playing</h1>}
       {file && (
         <div>
           <h1>{file.name}</h1>
@@ -108,12 +110,12 @@ function App() {
         </div>
       )}
       <input type="file" onChange={handleFileInput} />
-      <button
+      { file && <button
         onClick={handlePlayPause}
         className="bg-black p-2 px-4 text-white rounded-md my-2 max-w-24"
       >
         {isPlaying ? "Pause" : "Play"}
-      </button>
+      </button>}
       <div className="flex flex-col gap-2">
         {playlist.map((audio, i) => {
           return (
